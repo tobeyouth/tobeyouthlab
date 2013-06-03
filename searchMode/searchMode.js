@@ -28,11 +28,10 @@
 
 	*/
 
-	
 	/*
 		searchMode对象
 	*/
-	var searchMode = function (defaultData,options) {
+	var searchModes = function (defaultData,options) {
 		this.data = defaultData;
 		this.options = options;
 	};
@@ -40,89 +39,136 @@
 	var searchFlow = function (flowName,options) {
 		this.name = flowName;
 	};
-	
-	searchMode.modList = []; // searchMod的列表
+
+	searchModes.modList = []; // searchMod的列表
 	searchFlow.flowList = []; // searchflow的列表
 
 
 	/*
 		这里是主要内容
 	*/
-	searchMode.prototype = {
-		'constructor' : searchMode,
+	searchModes.prototype = {
+		'constructor' : searchModes,
 		// ajax请求回来的数据存放在这里
 		// 目前还没有做本地存储，因为考虑到这个东西可能经常性的更新
 		// 如果做了本地存储，效率可能会更低下
 		'callbackData' : null, 
-		'changeData' : function (data) { // 更新搜索条件,但不改变视图
-			$.extend(this.data,data);
-			return this;
+		// changeData方法基本不需要回调
+		// 如果写了回调，那也应该是在searchMode外进行操作
+		'changeData' : function (data,fun) { // 更新搜索条件,但不改变视图
+			var searchMode = this,
+				data = data,
+				fun = fun,
+				args = [].slice.call(arguments),
+				param = args.slice(2,args.length);
+
+			if (!!data && !$.isFunction(data)) {
+				$.extend(searchMode.data,data);
+			};
+
+			// 将data添加到调用的数组顶端
+			param.unshift(searchMode.data);
+
+			// 调用回调
+			if ($.isArray(fun)) {
+				for (var i = 0,len = fun.length;i < len;i++) {
+					fun[i].apply(searchMode,param);
+				};
+			} else if ($.isFunction(fun)) {
+				fun.apply(searchMode,param);
+			};
+			return searchMode;
 		},
 		// 刷新视图；
 		// fun这参数可以传入n个，就是可以有多个刷新视图的回调
-		// 最后一个参数just表示是否仅仅刷新视图;
-		// 就是不走ajax的过程，直接刷新callbackData中缓存的数据
-		// 默认为false，就是连带着请求数据和刷新视图
+		// just表示是否仅仅刷新视图
 		'changeView' : function (fun,just) {
 			var searchMode = this,
-				args = arguments,
-				len = args.length,
-				just =  args[len - 1],
-				funArr = [].slice.call(arguments).slice(0,len-1);
-			if (!!just && typeof(just) == 'boolean') { // 写了just且just为true时，只刷新页面
-				if ($.isArray(fun)) {
-					fun.call(searchMode,this.callbackData);
-				}
-			} else {
-				this.ajax(this.data,fun); // 请求数据，并刷新页面
-			};
-			return this;
-		},
-		'ajax' : function (data,fun) { // 只请求数据，存入到searchMode的callbackData中
-			if (!!data) { // 传入数据时，就先更新数据
-				this.changeData(data);
-			};
+				fun = fun,
+				args = [].slice.call(arguments),
+				just = args[1],
+				param = typeof(just) == 'boolean' ? args.slice(2,args.length) : args.slice(1,args.length),
+				funArr = $.isArray(fun) ? fun : [fun];
+				// fun = ($.isFunction(just) || $.isArray(just)) ? just : fun, // 这里做这个恶心的判断，是因为use中会统一塞入参数 data和fun
 
+			if (typeof(just) == 'boolean' && !!just) { // 写了just且just为true时，只刷新页面
+				param.unshift(searchMode.callbackData); // 推入数据
+				// 调用所有的changeView的回调
+				for (var i = 0,len = funArr.length;i < len;i++) {
+					// funArr[i].call(searchMode,searchMode.callbackData); 
+					funArr[i].apply(searchMode,param); 
+				};
+			} else { // 只有fun的情况
+				// 方法比较丑陋...
+				param.unshift(funArr);
+				param.unshift(searchMode.data);
+				searchMode.ajax.apply(searchMode,param); // 请求数据，并刷新页面
+			};
+			return searchMode;
+		},
+		'ajax' : function (data,fun) { // 只请求数据，存入到searchModes的callbackData中
 			var searchMode = this,
-				options = searchMode.options,
-				data = searchMode.data;
+				data = data,
+				fun = fun,
+				args = [].slice.call(arguments),
+				param = args.slice(2,args.length);
+
+			if (!!data && !$.isFunction(fun) && !$.isArray(fun)) { // 传入数据时，就先更新数据
+				searchMode.changeData(data);
+			}
+
+			var options = searchMode.options,
+				searchData = searchMode.data;
 
 			// 这里做ajax请求
 			$.ajax({
 				'url' : options['url'],
 				'type' : options['type'] || 'get',
 				'dataType' : options['dataType'] || 'json',
-				'data' : data,
+				'data' : searchData,
 				'success' : function (callbackData) {
 					searchMode.callbackData = callbackData; // 将缓存更新
+					param.unshift(callbackData); // 推入到回调的参数中
+
 					if ($.isArray(fun)) {
 						for (var i = 0,len = fun.length;i < len;i++) {
-							fun[i].call(searchMode,callbackData);
+							// 只有function才会被回调
+							// 因为在使用use方法的时候，会有obj混入fun列表中 o(╯□╰)o
+							if ($.isFunction(fun[i])) {
+								fun[i].apply(searchMode,param);
+							}
 						}
 					} else {
-						fun.call(searchMode,callbackData);
-					};
+						fun.apply(searchMode,param);
+					}
 					return searchMode; // 异步过程结束之后再返回对象，便于链式调用
 				},
 				'error' : function (err) {
-					console.log(err);
+					return searchMode;
 				}
 			});
 		},
 		'change' : function (data,fun) { // 更新搜索条件 -> 请求ajax -> 改变视图
-			var searchMode = this,
-				args = [].slice.call(arguments),
-				data = args.shift(),
-				fun = args.slice(1,args.length); // 将fun转化为数组
-			$.extend(this.data,data); // 更新搜索条件
-			this.changeView(fun); // 这些都在这里面做了
-			return this;
+			var searchMode = this;
+			$.extend(searchMode.data,data); // 更新搜索条件
+			searchMode.changeView(fun); // 这些都在这里面做了
+			return searchMode;
 		},
 		// 仅仅是创建一个过滤的动作，不关心数据是什么，和下一步动作是什么;
 		// 目前来看，主要应用在请求前的数据过滤，和请求后，刷新视图前的数据过滤
-		// 待完成 ： 需要创建一个标识，来判断是过滤搜索数据，还是过滤ajax请求数据
-		'filter' : function (fun) { 
-			fun.call(searchMode,{'callbackData':this.callbackData,'searchData' : this.data});
+		// 会给回调中塞入一个对象，包含两个属性，callbackData和searchData
+		// 根据use方法的需要，这里需要做一下判断
+		'filter' : function (fun) {
+			var args = arguments,
+				funArr = [].slice.call(args),
+				searchMode = this;
+
+			for (var i = 0,len = funArr.length;i < len;i++) {
+				if ($.isFunction(funArr[i])) { // 只调用function
+					funArr[i].call(searchMode,{'callbackData':this.callbackData,'searchData' : this.data});
+				}
+			}
+
 			return this;
 		},
 		// 使用flow对象
@@ -130,23 +176,65 @@
 			var searchMode = this,
 				isPrototypeOf = Object.prototype.isPrototypeOf,
 				flowProto = searchFlow.prototype,
+				step = !flow ? [] : flow['step'];
+
+			// 有可能有不传入data的情况
+			// 这个时候要凭空创建一个空的对象作为data
+			// 因为有可能changeData会被调用
+			// 这个时候data这个变量还是要有的才行
+			if (!flow) {
+				flow = data;
+				data = {};
 				step = flow['step'];
+			}
+
+			// 改变data
+			searchMode.changeData(data);
+
 			// 判断是否是flow对象
 			if (!isPrototypeOf.call(flowProto,flow)) {
 				console.log('请传入flow类型的对象');
 				return;
-			};
+			}
 
 			// 按照step中的步骤来执行
 			if (!!step && $.isArray(step)) {
 				for (var i = 0,len = step.length;i < len;i++) {
 					// 去找对应的方法，如果没有该方法，则跳过该方法继续执行并作出提示
-					var funName = step[i]+'Fun';
+					var stepName = step[i],
+						funName = stepName+'Fun',
+						fun = flow[funName];
+
+					// 执行动作
+					// 由于各个动作所需要的参数不同，所以在这里做一下判断
+					if (stepName === 'changeView') {
+						searchMode[stepName](fun);
+					} else if (stepName === 'filter') {
+						searchMode[stepName](fun);
+					} else {
+						if (!!fun) {
+							searchMode[stepName](searchMode.data,fun);
+						}
+					};
 				}
 			} else {
 				console.log('使用flow要先指定step才行');
 				return;
+			}
+
+			return searchMode;
+		},
+		// 返回搜索条件，虽然现在没什么用吧...
+		getData : function (type) {
+			var searchMode = this,
+				data;
+			if (!!type) {
+				data = searchMode.data[type];
+			} else {
+				data = searchMode.data;
 			};
+
+			return data;
 		},
 		// 检测对象某属性的变化
 		'watch' : function (type,setter) {
@@ -170,31 +258,30 @@
 		'config' : function (flow) {
 			for (key in flow) {
 				this[key] = flow[key]
-			};
+			}
 		}
 	};
 
 
 	// 绑定到jQuery上
 	$.extend({
-		'searchMode' : function (defaultData,options) {
-			var obj = new searchMode(defaultData,options);
-			searchMode.modList.push(obj); // 推入到列表
+		'searchModes' : function (defaultData,options) {
+			var obj = new searchModes(defaultData,options);
+			searchModes.modList.push(obj); // 推入到列表
 			return obj;
 		},
-		'searchFlow' : function (flowName) { // 返回一个工作流程对象
+		'searchFlow' : function (flowName,flowConfig) { // 返回一个工作流程对象
 			// 检查flowlist中是否已经存在了一个同名的flow
 			for (var i = 0 ,len = searchFlow.flowList.length;i < len;i++) {
 				if (searchFlow.flowList[i].name == flowName) {
 					console.log('已存在同名的flow,请重新命名');
 					return;
 				}
-			};
-
+			}
 			var flow = new searchFlow(flowName);
+			flow.config(flowConfig);
 			searchFlow.flowList.push(flow);
 			return flow;
 		}
 	});
 })(window,jQuery);
-
