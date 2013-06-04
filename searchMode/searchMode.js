@@ -149,9 +149,15 @@
 			});
 		},
 		'change' : function (data,fun) { // 更新搜索条件 -> 请求ajax -> 改变视图
-			var searchMode = this;
+			var searchMode = this,
+				data = data,
+				fun = fun,
+				args = [].slice.call(arguments),
+				param = args.slice(1,args.length);
+
 			$.extend(searchMode.data,data); // 更新搜索条件
-			searchMode.changeView(fun); // 这些都在这里面做了
+
+			searchMode.changeView.call(searchMode,param); // 这些都在这里面做了
 			return searchMode;
 		},
 		// 仅仅是创建一个过滤的动作，不关心数据是什么，和下一步动作是什么;
@@ -159,14 +165,25 @@
 		// 会给回调中塞入一个对象，包含两个属性，callbackData和searchData
 		// 根据use方法的需要，这里需要做一下判断
 		'filter' : function (fun) {
-			var args = arguments,
-				funArr = [].slice.call(args),
-				searchMode = this;
+			var searchMode = this,
+				callbackData = searchMode.callbackData,
+				data = searchMode.data,
+				dataOption = {
+					'callbackData' : callbackData,
+					'searchData' : data
+				},
+				args = [].slice.call(arguments),
+				fun = fun,
+				param = args.slice(1,args.length);
 
-			for (var i = 0,len = funArr.length;i < len;i++) {
-				if ($.isFunction(funArr[i])) { // 只调用function
-					funArr[i].call(searchMode,{'callbackData':this.callbackData,'searchData' : this.data});
-				}
+			param.unshift(dataOption);
+
+			if ($.isArray(fun)) {
+				for (var i = 0,len = fun.length;i < len;i++) {
+					fun[i].apply(searchMode,param);
+				};
+			} else {
+				fun.apply(searchMode,param);
 			}
 
 			return this;
@@ -176,6 +193,8 @@
 			var searchMode = this,
 				isPrototypeOf = Object.prototype.isPrototypeOf,
 				flowProto = searchFlow.prototype,
+				data = data,
+				flow = flow,
 				step = !flow ? [] : flow['step'];
 
 			// 有可能有不传入data的情况
@@ -186,7 +205,7 @@
 				flow = data;
 				data = {};
 				step = flow['step'];
-			}
+			};
 
 			// 改变data
 			searchMode.changeData(data);
@@ -203,19 +222,35 @@
 					// 去找对应的方法，如果没有该方法，则跳过该方法继续执行并作出提示
 					var stepName = step[i],
 						funName = stepName+'Fun',
-						fun = flow[funName];
+						stepFun = flow[funName], 
+						fun, // 要执行的方法
+						param; // 要传入的参数，不一定用的上
 
+					// 支持flow中传入参数
+					if ($.isArray(stepFun) || $.isFunction(stepFun)) {
+						fun = stepFun;
+						param = [fun];
+					} else if(typeof(stepFun) == 'object') {
+						fun = stepFun['fun'];
+						param = stepFun['param'];
+						param.unshift(fun);
+					} else {
+						console.log(funName + '参数不正确');
+					};
+					
 					// 执行动作
 					// 由于各个动作所需要的参数不同，所以在这里做一下判断
 					if (stepName === 'changeView') {
-						searchMode[stepName](fun);
+						searchMode[stepName].apply(searchMode,param);
 					} else if (stepName === 'filter') {
-						searchMode[stepName](fun);
+						searchMode[stepName].apply(searchMode,param);
 					} else {
 						if (!!fun) {
-							searchMode[stepName](searchMode.data,fun);
+							param.unshift(searchMode.data);
+							searchMode[stepName].apply(searchMode,param);
 						}
 					};
+
 				}
 			} else {
 				console.log('使用flow要先指定step才行');
