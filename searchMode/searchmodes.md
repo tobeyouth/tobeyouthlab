@@ -93,28 +93,28 @@
 - 所有的``fun``回调，如果需要传入多个回调方法，可以用输入的方式传入，例如``[fun1,fun2,fun3]``。
 - flow中也可以设置多个回调，例如：
 
-	var flow = $.searchFlow('flowName',{
-		'step' : ['filter','changeData'],
-		'filterFun' : [fun1,fun2,fun3]
-	});
+		var flow = $.searchFlow('flowName',{
+			'step' : ['filter','changeData'],
+			'filterFun' : [fun1,fun2,fun3]
+		});
 
 - 带入其他参数，searchMode的各个方法，都支持带入其他参数，例如：
 
-	searchMode.changeData(data,fun,param1,param2,param3);
+		searchMode.changeData(data,fun,param1,param2,param3);
 
 这些参数，都会被带入到fun中执行
 
 
 - flow中也可以带入其他参数，例如：
 	
-	var flow = $.searchFlow('flowName',{
-		'step' : ['filter','changeData'],
-		'filterFun' : {
-			'fun' : function () {}, // 回调
-			'param' : 'hi world' // param参数要传入多个，可以通过数组的方式
-		},
-		'changeDataFun' : fun
-	});
+		var flow = $.searchFlow('flowName',{
+			'step' : ['filter','changeData'],
+			'filterFun' : {
+				'fun' : function () {}, // 回调
+				'param' : 'hi world' // param参数要传入多个，可以通过数组的方式
+			},
+			'changeDataFun' : fun
+		});
 
 	
  
