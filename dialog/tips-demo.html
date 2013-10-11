@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>tips demo</title>
+	<link rel="stylesheet" href="/resources/public/lib/css/base.css">
+	<link rel="stylesheet" href="/resources/public/lib/css/commen.css">
+
+	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+	<script src="/resources/public/lib/js/template.min.js"></script>
+	<script src="/resources/public/lib/js/layer.js"></script>
+	<script src="/resources/public/lib/js/tips.js"></script>
+</head>
+<body>
+	<style>
+		.btn {width: 100px;height: 20px;text-align: center;line-height: 20px;display: block;background: #ccc;}
+	</style>
+	<div class="wrap">
+		<a class="btn" data-str="tips测试" id="tips-triger" href="#">点我</a>
+	</div>
+	<script>
+		$(function () {
+			$(document).delegate('#tips-triger','click',function (e) {
+				e.preventDefault();
+				var tip = new triggerTips({
+					'trigger' : $(this),
+					'content' : $(this).attr('data-str')
+				});
+				// tip.open();
+			});
+		});
+	</script>
+</body>
+</html>

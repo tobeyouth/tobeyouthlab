@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>弹层测试</title>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+	<script type="text/javascript" src="layer.js"></script>
+</head>
+<body>
+	
+</body>
+<script>
+	$(function () {
+		var newlayer = new layer({
+			'content' : '<p>测试</p>',
+			'wrap' : '<div class="wrap"></div>',
+			'assemble' : function (wrap,content) {
+				wrap.html(content);
+			}
+		});
+
+		newlayer.open(function () {
+			console.log('open');
+		});
+
+		setTimeout(function () {
+			newlayer.setContent('<p>测试2</p>');
+			newlayer.setStyle({
+				'position' : 'absolute',
+				'width' : '100px',
+				'height' : '30px',
+				'left' : '100px',
+				'top' : '100px',
+				'backgroundColor' : '#ccc'
+			});
+
+		},2000);
+
+		setTimeout(function () {
+			newlayer.close();
+		},3000);
+	});
+</script>
+</html>
