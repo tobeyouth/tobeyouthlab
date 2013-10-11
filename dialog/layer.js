@@ -105,6 +105,7 @@
 			if ($.isFunction(callback)) {
 				callback.call(layer,layer.dom);
 			} else if ($.isFunction(layer.setting.open)) {
+				console.log('open')
 				layer.setting.open.call(layer,layer.dom);
 			};
 		},

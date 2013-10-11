@@ -30,7 +30,7 @@
 		'right' : 'auto',
 		'top' : 'auto',
 		'bottom' : 'auto',
-		'width' : '100px',
+		'width' : 'auto',
 		'height' : 'auto',
 		'horizontal' : '0', // 水平偏移位置
 		'vertical' : '0', // 垂直偏移位置
@@ -89,8 +89,10 @@
 
 	// 自动获取位置的tips方法
 	function triggerTips(setting) {
-		this.setting = setting;
+		this.setting = $.extend({},defaultSetting,setting);
 		this.init();
+
+		return this;
 	};
 	triggerTips.prototype = {
 		'constructor' : triggerTips,
@@ -99,18 +101,19 @@
 			var triggerTip = this,
 				arrow = triggerTip.setting.arrow || 'bottom',
 				trigger = $(triggerTip.setting.trigger),
+				vertical = parseInt(triggerTip.setting.vertical,10),
+				horizontal = parseInt(triggerTip.setting.horizontal,10),
 				left = trigger.offset().left,
 				top = trigger.offset().top;
-
+			
 			triggerTip.trigger = trigger;
 			triggerTip.tip = new Tips({
 				'left' : left,
 				'top' : top,
 				'open' : function (layerDom) {
-					console.log(layerDom.height())
 					var layer = this,
-						fixedTop = top - layerDom.height() - 7,
-						fixedLeft = left + trigger.width() / 2;
+						fixedTop = top - layerDom.height() - 7 + vertical,
+						fixedLeft = left + trigger.width() / 2 - layerDom.width() / 2 + horizontal;
 
 					layer.setStyle({
 						'top' : fixedTop,

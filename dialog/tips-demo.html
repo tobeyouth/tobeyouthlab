@@ -3,13 +3,14 @@
 <head>
 	<meta charset="UTF-8">
 	<title>tips demo</title>
-	<link rel="stylesheet" href="/resources/public/lib/css/base.css">
-	<link rel="stylesheet" href="/resources/public/lib/css/commen.css">
+
+	<link rel="stylesheet" href="base.css">
+	<link rel="stylesheet" href="commen.css">
 
 	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
-	<script src="/resources/public/lib/js/template.min.js"></script>
-	<script src="/resources/public/lib/js/layer.js"></script>
-	<script src="/resources/public/lib/js/tips.js"></script>
+	<script src="template.min.js"></script>
+	<script src="layer.js"></script>
+	<script src="tips.js"></script>
 </head>
 <body>
 	<style>
@@ -24,7 +25,9 @@
 				e.preventDefault();
 				var tip = new triggerTips({
 					'trigger' : $(this),
-					'content' : $(this).attr('data-str')
+					'content' : $(this).attr('data-str'),
+					'vertical' : '-10',
+					'horizontal' : 20
 				});
 				// tip.open();
 			});
