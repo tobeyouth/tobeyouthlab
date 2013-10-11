@@ -31,10 +31,14 @@
 		'assemble' : null // 组装wrap和content
 	};
 
+	var layerList = {}; // 一个列表，用于记录页面中所有生成layer
+
 	function layer(setting) {
 		layerId += 1;
 		this.setting = $.extend({},defaultSetting,setting);
-		this.id = layerId;
+		this.isOpen = false; // 表示是否处于open状态
+		this.id = 'layer-' + layerId;
+		layerList[this.id] = this;
 	};
 
 	layer.prototype = {
@@ -73,6 +77,8 @@
 				dom = layer.wrap.append(layer.content);
 			};
 			layer.dom = $(dom).hide();
+
+			return layer;
 		},
 		// 定位
 		'setStyle' : function (options,callback) {
@@ -85,6 +91,8 @@
 			if ($.isFunction(callback)) {
 				callback.call(layer,layer.dom);
 			};
+
+			return layer;
 		},
 		'open' : function (callback) {
 			var layer = this;
@@ -105,9 +113,11 @@
 			if ($.isFunction(callback)) {
 				callback.call(layer,layer.dom);
 			} else if ($.isFunction(layer.setting.open)) {
-				console.log('open')
 				layer.setting.open.call(layer,layer.dom);
 			};
+
+			layer.isOpen = true;
+			return layer;
 		},
 		'close' : function (callback) {
 			var layer = this;
@@ -129,6 +139,9 @@
 					};
 				});
 			};
+
+			layer.isOpen = false;
+			return layer;
 		},
 		// 插入内容
 		'setContent' : function (content) {
@@ -142,11 +155,14 @@
 			} else {
 				dom = layer.wrap.html(layer.content);
 			};
+
+			return layer;
 		},
 		'destroy' : function () {
 			var layer = this;
 			layer.dom.remove();
 			layer = null;
+			delete(layerList[this.id])
 		}
 	};
 

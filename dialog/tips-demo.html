@@ -17,11 +17,17 @@
 		.btn {width: 100px;height: 20px;text-align: center;line-height: 20px;display: block;background: #ccc;}
 	</style>
 	<div class="wrap">
-		<a class="btn" data-str="tips测试" id="tips-triger" href="#">点我</a>
+		<a class="btn" data-str="tips测试1" id="tips-triger" href="#">点我</a>
+	</div>
+	<div class="wrap">
+		<a class="btn" data-str="tips测试2" id="tips-triger" href="#">点我2</a>
+	</div>
+	<div class="wrap">
+		<a class="btn" data-str="tips测试3" id="tips-triger" href="#">点我3</a>
 	</div>
 	<script>
 		$(function () {
-			$(document).delegate('#tips-triger','click',function (e) {
+			$(document).delegate('.btn','click',function (e) {
 				e.preventDefault();
 				var tip = new triggerTips({
 					'trigger' : $(this),
@@ -29,6 +35,14 @@
 					'vertical' : '-10',
 					'horizontal' : 20
 				});
+
+				var closeTimer = setTimeout(function () {
+					tip.close();
+				},1000);
+
+				// var openTimer = setTimeout(function () {
+				// 	tip.open();
+				// },3000);
 				// tip.open();
 			});
 		});
