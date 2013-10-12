@@ -36,17 +36,22 @@
 	function layer(setting) {
 		layerId += 1;
 		this.setting = $.extend({},defaultSetting,setting);
-		this.isOpen = false; // 表示是否处于open状态
 		this.id = 'layer-' + layerId;
 		layerList[this.id] = this;
+		this.isOpen = false; // 表示是否处于open状态
+		this.rendered = false; // 表示是否已经渲染完成
+		this.inserted = false; // 表示是否已经插入到页面中
+		this.dom = null; // 弹层对应的dom对象
+		this.content = null; // 弹层对应的content
+		this.wrap = null; // 弹层对应的wrap
 	};
 
 	layer.prototype = {
 		'constructor' : layer,
-		'open' : false, // 是否处于open状态
-		'dom' : null, // dom对象，带有外框
-		'content' : null, // 内容部分
-		// 渲染对象
+		// 'rendered' : false, // 是否已经被渲染
+		// 'dom' : null, // dom对象，带有外框
+		// 'content' : null, // 内容部分
+		// 根据setting渲染对象
 		'render' : function () {
 			var layer = this,
 				wrap,content,dom;
@@ -80,6 +85,28 @@
 
 			return layer;
 		},
+		/**
+		 * 手动渲染
+		 * @param  {$ dom} wrap    [wrap对象]
+		 * @param  {$ dom} content [content对象]
+		 * @param  {fun} handler [渲染方法，如果为空的话，则直接执行wrap.append(content)]
+		 * @return {[type]}         [layer对象]
+		 */
+		'assemble' : function (wrap,content,handler) {
+			var layer = this;
+			layer.wrap = wrap;
+			layer.content = content;
+			if ($.isFunction(handler)) {
+				handler(layer.wrap,layer.content);
+				layer.dom = layer.wrap;
+			} else {
+				layer.dom = layer.wrap.append(layer.content);
+			};
+
+			layer.rendered = true;
+
+			return layer;
+		},
 		// 定位
 		'setStyle' : function (options,callback) {
 			var layer = this,
@@ -97,10 +124,17 @@
 		'open' : function (callback) {
 			var layer = this;
 
-			layer.render();
-			layer.setStyle(layer.setting.style);
-
-			layer.dom.appendTo('body');
+			// 如果没渲染过，要先渲染
+			if (!layer.rendered) {
+				layer.render();
+				layer.setStyle(layer.setting.style);
+			};
+			
+			// 如果没有插入过，则插入到页面中
+			if (!layer.inserted) {
+				layer.dom.appendTo('body');
+				layer.inserted = true;
+			};
 
 			// 回调
 			if ($.isFunction(layer.setting.beforeOpen)) {
@@ -167,7 +201,6 @@
 	};
 
 	// helper
-
 
 	exports.layer = layer;
 })(window,jQuery);

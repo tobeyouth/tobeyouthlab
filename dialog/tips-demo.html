@@ -29,7 +29,7 @@
 		$(function () {
 			$(document).delegate('.btn','click',function (e) {
 				e.preventDefault();
-				var tip = new triggerTips({
+				var tip = new Tips({
 					'trigger' : $(this),
 					'content' : $(this).attr('data-str'),
 					'vertical' : '-10',
