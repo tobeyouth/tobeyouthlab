@@ -6,11 +6,16 @@
  * by jn
  */
 (function (exports,$) {
-	var layerId = 0,
-		layers = [];
+
+
+	var layerId = 0, // layer的标记
+		layerList = [], // 记录生成的layer
+		layers = [], // 记录所有基于layer原型生成的对象
+		mask; // 生成一个mask
 
 	var defaultSetting = {
 		'cache' : false, // 关闭后是否保留弹层
+		'hasMask' : true, // 是否调用遮罩
 		// 位置信息
 		'style' : {
 			'left' : 'auto',
@@ -18,7 +23,8 @@
 			'right' : 'auto',
 			'bottom' : 'auto',
 			'width' : 'auto',
-			'height' : 'auto'
+			'height' : 'auto',
+			'zIndex' : '1001'
 		},
 		// 各种回调和方法
 		'beforeOpen' : null, // open之前的回调
@@ -31,8 +37,6 @@
 		'assemble' : null // 组装wrap和content
 	};
 
-	var layerList = {}; // 一个列表，用于记录页面中所有生成layer
-
 	function layer(setting) {
 		layerId += 1;
 		this.setting = $.extend({},defaultSetting,setting);
@@ -44,6 +48,7 @@
 		this.dom = null; // 弹层对应的dom对象
 		this.content = null; // 弹层对应的content
 		this.wrap = null; // 弹层对应的wrap
+		layerList.push(this);
 	};
 
 	layer.prototype = {
@@ -83,6 +88,8 @@
 			};
 			layer.dom = $(dom).hide();
 
+			layer.rendered = true;
+			layers.push(layer);
 			return layer;
 		},
 		/**
@@ -104,7 +111,7 @@
 			};
 
 			layer.rendered = true;
-
+			layers.push(layer);
 			return layer;
 		},
 		// 定位
@@ -128,6 +135,15 @@
 			if (!layer.rendered) {
 				layer.render();
 				layer.setStyle(layer.setting.style);
+			};
+
+			// 判断是否需要插入mask
+			if (layer.setting.hasMask) {
+				if (!mask) {
+					mask = new Mask();
+				};
+				layer.mask = mask;
+				mask.open();
 			};
 			
 			// 如果没有插入过，则插入到页面中
@@ -175,6 +191,21 @@
 			};
 
 			layer.isOpen = false;
+
+			// 关闭mask
+			var closeMask = true;
+			if (layer.setting.hasMask) {
+				for (var i = 0,len = layers.length;i < len;i++) {
+					if (layers[i].isOpen && layers[i].setting.hasMask) {
+						closeMask = false;
+					}
+				};
+			};
+
+			if (closeMask && mask) {
+				mask.close();
+			};
+			
 			return layer;
 		},
 		// 插入内容

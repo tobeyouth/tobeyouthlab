@@ -55,7 +55,6 @@
 	};
 
 	Tips.prototype = layer.prototype;
-	// Tips.prototype = new Tips(this.setting);
 	Tips.prototype.constructor = Tips;
 	Tips.prototype.init = function () {
 		var tip = this,
@@ -65,8 +64,6 @@
 			horizontal = parseInt(tip.setting.horizontal, 10),
 			left = trigger.offset().left,
 			top = trigger.offset().top;
-
-		
 
 		tip.trigger = trigger;
 		tip.assemble(this.wrap,this.setting.content,function (wrap,content) {

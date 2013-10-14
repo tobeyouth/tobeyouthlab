@@ -9,12 +9,14 @@
 
 	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
 	<script src="template.min.js"></script>
+	<script src="mask.js"></script>
 	<script src="layer.js"></script>
 	<script src="tips.js"></script>
 </head>
 <body>
 	<style>
 		.btn {width: 100px;height: 20px;text-align: center;line-height: 20px;display: block;background: #ccc;}
+		.wrap {position: relative;z-index: 1002};
 	</style>
 	<div class="wrap">
 		<a class="btn" data-str="tips测试1" id="tips-triger" href="#">点我</a>
@@ -29,16 +31,18 @@
 		$(function () {
 			$(document).delegate('.btn','click',function (e) {
 				e.preventDefault();
+				var mask = new Mask();
 				var tip = new Tips({
 					'trigger' : $(this),
 					'content' : $(this).attr('data-str'),
 					'vertical' : '-10',
+					'hasMask' : true,
 					'horizontal' : 20
 				});
 
 				var closeTimer = setTimeout(function () {
 					tip.close();
-				},1000);
+				},4000);
 
 				// var openTimer = setTimeout(function () {
 				// 	tip.open();
